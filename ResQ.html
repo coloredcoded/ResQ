@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ - Emergency Flood Response</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .nav-btn.active { border-bottom: 4px solid #ef4444; color: #ef4444; font-weight: 700; }
+        
+        /* Custom scrollbar for better aesthetics on desktop preview */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased flex flex-col min-h-screen">
+
+    <header class="bg-gray-900 text-white p-4 shadow-md sticky top-0 z-40 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <h1 class="text-xl font-bold tracking-wide">ResQ</h1>
+        </div>
+        <div id="networkStatus" class="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700">
+            <div id="statusDot" class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+            <span id="statusText" class="text-sm font-semibold uppercase tracking-wider text-green-400">Online</span>
+        </div>
+    </header>
+
+    <nav class="bg-white border-b border-gray-200 sticky top-[68px] z-30 shadow-sm">
+        <div class="flex justify-around">
+            <button onclick="switchTab('requestTab', this)" class="nav-btn active flex-1 py-4 text-center text-gray-600 font-semibold transition-colors">
+                Request
+            </button>
+            <button onclick="switchTab('healthTab', this)" class="nav-btn flex-1 py-4 text-center text-gray-600 font-semibold transition-colors">
+                Health Info
+            </button>
+            <button onclick="switchTab('smsTab', this)" class="nav-btn flex-1 py-4 text-center text-gray-600 font-semibold transition-colors">
+                SMS Alerts
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-1 p-4 max-w-2xl mx-auto w-full">
+        <!-- Tab 1: Request Help -->
+        <section id="requestTab" class="tab-content active">
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Request Assistance</h2>
+                <p class="text-sm text-gray-600 mb-6 border-l-4 border-blue-500 pl-3">
+                    If offline, requests are saved securely on your device and will automatically send when connectivity is restored.
+                </p>
+                
+                <form id="helpForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1" for="name">Full Name</label>
+                        <input type="text" id="name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1" for="location">Current Location / Landmark</label>
+                        <input type="text" id="location" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1" for="urgency">Urgency Level</label>
+                        <select id="urgency" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-white">
+                            <option value="high">High - Immediate Danger / Medical Issue</option>
+                            <option value="medium">Medium - Stuck, Need Rescue Soon</option>
+                            <option value="low">Low - Need Supplies (Food/Water)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1" for="details">Additional Details</label>
+                        <textarea id="details" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg shadow-md transition-colors text-lg flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        Submit Request
+                    </button>
+                </form>
+            </div>
+
+            <!-- Queue Status Display -->
+            <div id="queueContainer" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg shadow-sm">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-bold text-yellow-800">Requests Queued Offline</h3>
+                        <p class="text-sm text-yellow-700 mt-1" id="queueCount">0 requests waiting to be synced.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Health Info -->
+        <section id="healthTab" class="tab-content">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 px-1">Offline Health Guides</h2>
+            
+            <div class="space-y-4">
+                <!-- Skin Infections Card -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="bg-blue-50 border-b border-gray-200 p-4">
+                        <h3 class="text-lg font-bold text-blue-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            First Aid: Skin Infections
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-3 text-gray-700">
+                        <p>Floodwaters contain harmful bacteria. Prompt care for cuts is vital.</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li><strong>Clean Immediately:</strong> Wash hands first. Wash the wound with clean, safe water (bottled or boiled) and soap.</li>
+                            <li><strong>Disinfect:</strong> Apply an antiseptic solution (like povidone-iodine) if available.</li>
+                            <li><strong>Cover:</strong> Cover with a clean, dry bandage or cloth. Keep it as dry as possible.</li>
+                            <li><strong>Monitor:</strong> Watch for redness, swelling, warmth, or pus. Seek medical help if these occur.</li>
+                            <li><strong>Avoid Floodwater:</strong> Do not let open wounds touch floodwater again.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Water Purification Card -->
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="bg-teal-50 border-b border-gray-200 p-4">
+                        <h3 class="text-lg font-bold text-teal-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+                            Water Purification Methods
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-3 text-gray-700">
+                        <p>If bottled water is unavailable, you must purify water before drinking or cleaning wounds.</p>
+                        <ul class="list-decimal pl-5 space-y-3">
+                            <li>
+                                <strong>Boiling (Most Reliable)</strong><br>
+                                Filter cloudy water through a clean cloth. Bring to a rolling boil for at least 1 full minute (3 minutes at high altitudes). Let it cool naturally.
+                            </li>
+                            <li>
+                                <strong>Chlorine Bleach</strong><br>
+                                Use regular, unscented household bleach (5.25%-8.25% chlorine). Add 2 drops per liter (or 8 drops per gallon) of clear water. Stir well and let stand for 30 minutes before using.
+                            </li>
+                            <li>
+                                <strong>Solar Water Disinfection (SODIS)</strong><br>
+                                Fill clear plastic bottles (PET) with relatively clear water. Expose to direct sunlight for at least 6 hours (or 2 days if cloudy).
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: SMS Alerts -->
+        <section id="smsTab" class="tab-content">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2 px-1">SMS Quick Actions</h2>
+            <p class="text-sm text-gray-600 mb-6 px-1 border-l-4 border-purple-500 pl-3">
+                Use these buttons to quickly generate SMS messages for critical alerts when internet is completely down. Standard SMS rates apply.
+            </p>
+            
+            <div class="space-y-4">
+                <!-- SMS: Early Warning -->
+                <a href="sms:1234?body=SUBSCRIBE%20EARLY%20WARNING" class="block w-full bg-white border-2 border-purple-600 rounded-xl p-5 shadow-sm active:bg-purple-50 transition-colors text-left group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-purple-900 mb-1">Get Early Warnings</h3>
+                            <p class="text-sm text-gray-600">Subscribe to automated SMS flood alerts.</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full group-active:bg-purple-200">
+                            <svg class="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- SMS: Find Outpost -->
+                <a href="sms:1234?body=FIND%20OUTPOST" class="block w-full bg-white border-2 border-indigo-600 rounded-xl p-5 shadow-sm active:bg-indigo-50 transition-colors text-left group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-indigo-900 mb-1">Locate Health Outpost</h3>
+                            <p class="text-sm text-gray-600">Text to receive the nearest temporary clinic location.</p>
+                        </div>
+                        <div class="bg-indigo-100 p-3 rounded-full group-active:bg-indigo-200">
+                            <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification (replaces alert()) -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 z-50 flex items-center gap-2 max-w-[90vw] text-sm md:text-base font-medium">
+        <svg id="toastIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
+    <script>
+        // --- Constants & State ---
+        const QUEUE_KEY = 'resq_offline_queue';
+        let isOnline = navigator.onLine;
+
+        // --- DOM Elements ---
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const networkStatusBadge = document.getElementById('networkStatus');
+        const helpForm = document.getElementById('helpForm');
+        const queueContainer = document.getElementById('queueContainer');
+        const queueCountDisplay = document.getElementById('queueCount');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
+
+        // --- Tab Switching Logic ---
+        function switchTab(tabId, btnElement) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            // Highlight selected button
+            btnElement.classList.add('active');
+            
+            // Scroll to top when switching
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Toast Notification Logic ---
+        let toastTimeout;
+        function showToast(message, type = 'info') {
+            clearTimeout(toastTimeout);
+            toastMsg.textContent = message;
+            
+            if (type === 'success') {
+                toastIcon.classList.remove('hidden');
+                toastIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                toastIcon.classList.remove('text-red-400');
+                toastIcon.classList.add('text-green-400');
+            } else if (type === 'error') {
+                toastIcon.classList.remove('hidden');
+                toastIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>';
+                toastIcon.classList.remove('text-green-400');
+                toastIcon.classList.add('text-red-400');
+            } else {
+                toastIcon.classList.add('hidden');
+            }
+
+            toast.classList.remove('opacity-0');
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 3500);
+        }
+
+        // --- Network Status Logic ---
+        function updateNetworkIndicator() {
+            isOnline = navigator.onLine;
+            
+            if (isOnline) {
+                // Online Styling
+                statusDot.className = 'w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] transition-colors duration-300';
+                statusText.className = 'text-sm font-semibold uppercase tracking-wider text-green-400 transition-colors duration-300';
+                statusText.textContent = 'Online';
+                networkStatusBadge.className = 'flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 transition-colors duration-300';
+                
+                showToast('Back Online. Network connection restored.', 'success');
+                syncQueue(); // Attempt to sync immediately when coming online
+            } else {
+                // Offline Styling
+                statusDot.className = 'w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] transition-colors duration-300';
+                statusText.className = 'text-sm font-semibold uppercase tracking-wider text-red-400 transition-colors duration-300';
+                statusText.textContent = 'Offline';
+                networkStatusBadge.className = 'flex items-center gap-2 bg-red-950 px-3 py-1.5 rounded-full border border-red-900 transition-colors duration-300';
+                
+                showToast('Offline Mode. Requests will be saved locally.', 'error');
+            }
+        }
+
+        // --- Queue System Logic ---
+        function getQueue() {
+            const queueStr = localStorage.getItem(QUEUE_KEY);
+            return queueStr ? JSON.parse(queueStr) : [];
+        }
+
+        function saveToQueue(requestData) {
+            const queue = getQueue();
+            queue.push({
+                ...requestData,
+                id: Date.now(),
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+            updateQueueDisplay();
+        }
+
+        function updateQueueDisplay() {
+            const queue = getQueue();
+            if (queue.length > 0) {
+                queueContainer.classList.remove('hidden');
+                queueCountDisplay.textContent = `${queue.length} request(s) waiting for connection.`;
+            } else {
+                queueContainer.classList.add('hidden');
+            }
+        }
+
+        // Simulate sending data to server
+        async function syncQueue() {
+            const queue = getQueue();
+            if (queue.length === 0) return;
+
+            showToast(`Syncing ${queue.length} queued requests...`);
+
+            // Simulate network delay for API call
+            setTimeout(() => {
+                if (navigator.onLine) {
+                    // Success! Clear queue
+                    localStorage.removeItem(QUEUE_KEY);
+                    updateQueueDisplay();
+                    showToast('Queued requests successfully sent!', 'success');
+                } else {
+                    // Connection dropped during sync
+                    showToast('Sync failed. Still offline.', 'error');
+                }
+            }, 2000);
+        }
+
+        // --- STREAMING_CHUNK:Form Submission Handling ---
+        helpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // Gather Data
+            const requestData = {
+                name: document.getElementById('name').value.trim(),
+                location: document.getElementById('location').value.trim(),
+                urgency: document.getElementById('urgency').value,
+                details: document.getElementById('details').value.trim()
+            };
+
+            if (isOnline) {
+                // Simulate immediate processing
+                showToast('Sending request to server...');
+                setTimeout(() => {
+                    if(navigator.onLine) {
+                        showToast('Request sent successfully!', 'success');
+                        helpForm.reset();
+                    } else {
+                        // Edge case: dropped offline during submission
+                        saveToQueue(requestData);
+                        showToast('Connection lost. Request saved to queue.', 'error');
+                        helpForm.reset();
+                    }
+                }, 1000);
+            } else {
+                // Offline: Queue it
+                saveToQueue(requestData);
+                showToast('Offline. Request saved and queued.', 'info');
+                helpForm.reset();
+            }
+        });
+
+        // --- Initialization ---
+        window.addEventListener('online', updateNetworkIndicator);
+        window.addEventListener('offline', updateNetworkIndicator);
+
+        // Initial check on load
+        updateQueueDisplay();
+        
+        // If we load the app and we are online, check if there's a queue to sync
+        if (navigator.onLine && getQueue().length > 0) {
+            syncQueue();
+        }
+    </script>
+</body>
+</html>
