@@ -1,0 +1,4828 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b5ed7">
+<title>FloodLink — Flood Resilience for Small Businesses</title>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  crossorigin=""
+>
+
+<style>
+:root {
+  --navy:#073b73;
+  --blue:#0b5ed7;
+  --sky:#36a9ff;
+  --cyan:#8ee8ff;
+  --ice:#eef8ff;
+  --white:#fff;
+  --ink:#10233f;
+  --muted:#62748c;
+  --line:#dbeaf7;
+  --success:#16a673;
+  --warning:#f59e0b;
+  --danger:#e5484d;
+  --purple:#7557d8;
+  --bg:#f5fbff;
+  --card:#ffffff;
+  --input:#fbfdff;
+  --shadow:0 18px 45px rgba(12,70,130,.12);
+  --radius:22px;
+}
+
+* {
+  box-sizing:border-box;
+}
+
+html {
+  scroll-behavior:smooth;
+}
+
+body {
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,
+    BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+}
+
+body.dark {
+  --ink:#f3f8ff;
+  --muted:#b7c8d9;
+  --line:#31536f;
+  --bg:#071725;
+  --card:#0d263d;
+  --input:#102d46;
+  --ice:#102d46;
+  --white:#f5fbff;
+  --shadow:0 18px 45px rgba(0,0,0,.3);
+}
+
+button,
+input,
+select,
+textarea {
+  font:inherit;
+}
+
+button {
+  cursor:pointer;
+}
+
+button:disabled {
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+/* =========================
+   APP
+========================= */
+
+.app {
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:250px 1fr;
+}
+
+.sidebar {
+  position:sticky;
+  top:0;
+  height:100vh;
+  padding:24px 16px;
+  background:
+    linear-gradient(
+      180deg,
+      #062f62 0%,
+      #0a4f98 52%,
+      #0b72cf 100%
+    );
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  z-index:1200;
+}
+
+.brand {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:6px 10px 28px;
+}
+
+.brandmark {
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#fff,#9de9ff);
+  display:grid;
+  place-items:center;
+  color:#0b5ed7;
+  font-size:22px;
+  font-weight:900;
+}
+
+.brand h1 {
+  font-size:20px;
+  margin:0;
+}
+
+.brand span {
+  font-size:11px;
+  color:#bfe9ff;
+}
+
+.nav {
+  display:grid;
+  gap:7px;
+}
+
+.nav button {
+  border:0;
+  background:transparent;
+  color:#dff4ff;
+  text-align:left;
+  padding:12px 13px;
+  border-radius:13px;
+  font-weight:700;
+}
+
+.nav button:hover,
+.nav button.active {
+  background:rgba(255,255,255,.14);
+  color:#fff;
+}
+
+.sidebar-bottom {
+  margin-top:auto;
+}
+
+.mini {
+  font-size:11px;
+  color:#bfe9ff;
+  line-height:1.5;
+  padding:12px;
+}
+
+/* =========================
+   TOPBAR
+========================= */
+
+.main {
+  min-width:0;
+}
+
+.topbar {
+  height:74px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  position:sticky;
+  top:0;
+  z-index:900;
+}
+
+.dark .topbar {
+  background:rgba(7,23,37,.94);
+}
+
+.top-actions {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.modebtn,
+.iconbtn {
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--ink);
+  border-radius:12px;
+  padding:9px 12px;
+}
+
+.avatar {
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--blue),var(--sky));
+  color:#fff;
+  font-weight:800;
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content {
+  padding:28px;
+  max-width:1500px;
+  margin:auto;
+}
+
+.view {
+  display:none;
+}
+
+.view.active {
+  display:block;
+}
+
+.hero {
+  border-radius:28px;
+  padding:28px;
+  color:#fff;
+  background:
+    radial-gradient(
+      circle at 85% 10%,
+      rgba(255,255,255,.28),
+      transparent 30%
+    ),
+    linear-gradient(
+      120deg,
+      #063a76,
+      #0872d8 58%,
+      #37c8ed
+    );
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+
+.hero h2 {
+  font-size:clamp(25px,3vw,38px);
+  margin:0 0 8px;
+}
+
+.hero p {
+  max-width:700px;
+  color:#e5f7ff;
+  margin:0;
+  line-height:1.6;
+}
+
+.pill {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.15);
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:14px;
+}
+
+.grid {
+  display:grid;
+  gap:16px;
+}
+
+.stats {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  margin-top:18px;
+}
+
+.card {
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:0 10px 28px rgba(11,94,215,.06);
+  padding:20px;
+}
+
+.dark .card {
+  box-shadow:0 10px 28px rgba(0,0,0,.16);
+}
+
+.stat {
+  position:relative;
+  overflow:hidden;
+}
+
+.stat:after {
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  right:-25px;
+  top:-25px;
+  background:linear-gradient(135deg,#e5f6ff,#b9e9ff);
+  border-radius:50%;
+}
+
+.dark .stat:after {
+  background:#153b5c;
+}
+
+.stat small {
+  color:var(--muted);
+  font-weight:700;
+}
+
+.stat strong {
+  display:block;
+  font-size:29px;
+  margin-top:5px;
+  color:var(--navy);
+}
+
+.dark .stat strong {
+  color:#eaf5ff;
+}
+
+.section-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin:26px 0 13px;
+}
+
+.section-head h3,
+.section-head h2 {
+  margin:0;
+}
+
+.sub {
+  color:var(--muted);
+  font-size:13px;
+}
+
+.two {
+  grid-template-columns:minmax(0,1.5fr) minmax(300px,.7fr);
+}
+
+.three {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn {
+  border:0;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:800;
+}
+
+.primary {
+  background:linear-gradient(135deg,#0758c9,#0da4e9);
+  color:#fff;
+}
+
+.secondary {
+  background:#eaf5ff;
+  color:#0758c9;
+}
+
+.dark .secondary {
+  background:#143e62;
+  color:#dcefff;
+}
+
+.ghost {
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--ink);
+}
+
+.danger {
+  background:#ffe8e8;
+  color:#a91e28;
+}
+
+.dark .danger {
+  background:#4b1f26;
+  color:#ffb8bd;
+}
+
+.success {
+  background:#e7f8f1;
+  color:#087b53;
+}
+
+.dark .success {
+  background:#123c31;
+  color:#9ef0cf;
+}
+
+.btn.small {
+  padding:7px 10px;
+  font-size:12px;
+}
+
+/* =========================
+   ALERTS
+========================= */
+
+.alert {
+  display:flex;
+  gap:13px;
+  align-items:flex-start;
+  padding:14px;
+  border-radius:16px;
+  background:#fff5e6;
+  border:1px solid #ffe0ae;
+  color:#4d3920;
+}
+
+.dark .alert {
+  background:#392d1a;
+  border-color:#66502c;
+  color:#ffe6b5;
+}
+
+.dot {
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  margin-top:5px;
+  flex:none;
+}
+
+.blue { background:var(--blue); }
+.red { background:var(--danger); }
+.green { background:var(--success); }
+.orange { background:var(--warning); }
+.purple { background:var(--purple); }
+
+/* =========================
+   MAP
+========================= */
+
+.map-shell {
+  overflow:hidden;
+  border-radius:20px;
+  border:1px solid var(--line);
+}
+
+#mapCanvas {
+  height:560px;
+  width:100%;
+}
+
+.map-tools {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.legend {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:12px;
+  background:var(--card);
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+  font-weight:700;
+}
+
+.legend span {
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.legend i {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  display:inline-block;
+}
+
+.report-placement {
+  display:none;
+  padding:12px;
+  background:#fff5e6;
+  border:1px solid #ffd99c;
+  border-radius:14px;
+  margin-bottom:10px;
+  color:#573a0a;
+}
+
+.report-placement.show {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.dark .report-placement {
+  background:#382c18;
+  color:#ffe8b0;
+  border-color:#6a5225;
+}
+
+/* =========================
+   FORMS
+========================= */
+
+.formgrid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.field {
+  display:grid;
+  gap:6px;
+}
+
+.field.full {
+  grid-column:1/-1;
+}
+
+.field label {
+  font-size:12px;
+  font-weight:800;
+  color:#476078;
+}
+
+.dark .field label {
+  color:#d2e4f4;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width:100%;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  outline:none;
+  background:var(--input);
+  color:var(--ink);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color:var(--muted);
+  opacity:.9;
+}
+
+.field select option {
+  background:var(--card);
+  color:var(--ink);
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color:#6dbfff;
+  box-shadow:0 0 0 3px #e1f3ff;
+}
+
+/* =========================
+   NEEDS
+========================= */
+
+.list {
+  display:grid;
+  gap:10px;
+}
+
+.need,
+.person {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--card);
+}
+
+.need h4,
+.person h4 {
+  margin:0 0 4px;
+}
+
+.need p,
+.person p {
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.need-actions {
+  display:flex;
+  gap:7px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.tags {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.tag {
+  font-size:11px;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#edf7ff;
+  color:#0a5cae;
+  font-weight:800;
+}
+
+.dark .tag {
+  background:#163e60;
+  color:#ccecff;
+}
+
+.reported-badge {
+  display:inline-block;
+  margin-top:8px;
+  font-size:11px;
+  color:#b0262f;
+  background:#ffe8e8;
+  padding:5px 8px;
+  border-radius:999px;
+  font-weight:800;
+}
+
+.dark .reported-badge {
+  background:#4c2027;
+  color:#ffb9bf;
+}
+
+.progress {
+  height:9px;
+  border-radius:999px;
+  background:#eaf2f8;
+  overflow:hidden;
+}
+
+.dark .progress {
+  background:#18334a;
+}
+
+.progress b {
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#0b5ed7,#40c9ee);
+}
+
+.notice {
+  padding:12px 14px;
+  border-radius:14px;
+  background:#edf8ff;
+  border:1px solid #ccecff;
+  color:#07508f;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.dark .notice {
+  background:#102f49;
+  border-color:#28506f;
+  color:#c8e9ff;
+}
+
+.empty {
+  padding:28px;
+  text-align:center;
+  color:var(--muted);
+  border:1px dashed #bcd8ed;
+  border-radius:16px;
+}
+
+/* =========================
+   MESSAGES
+========================= */
+
+.chat-layout {
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:16px;
+}
+
+.conversation-list {
+  max-height:600px;
+  overflow:auto;
+}
+
+.conversation {
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:14px;
+  padding:12px;
+  cursor:pointer;
+  margin-bottom:8px;
+}
+
+.conversation:hover,
+.conversation.active {
+  border-color:#68b7f0;
+  background:#edf8ff;
+}
+
+.dark .conversation:hover,
+.dark .conversation.active {
+  background:#123551;
+}
+
+.chat-window {
+  min-height:600px;
+  display:flex;
+  flex-direction:column;
+}
+
+.chat-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+
+.messages {
+  flex:1;
+  min-height:350px;
+  max-height:500px;
+  overflow:auto;
+  padding:15px 4px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.message {
+  max-width:78%;
+  padding:10px 13px;
+  border-radius:16px;
+  background:#edf6ff;
+  align-self:flex-start;
+  border:1px solid #d8ebfa;
+}
+
+.dark .message {
+  background:#14344f;
+  border-color:#28516f;
+}
+
+.message.mine {
+  background:#0b5ed7;
+  color:white;
+  border-color:#0b5ed7;
+  align-self:flex-end;
+}
+
+.message-time {
+  display:block;
+  font-size:10px;
+  opacity:.7;
+  margin-top:5px;
+}
+
+.message img {
+  max-width:280px;
+  max-height:220px;
+  border-radius:12px;
+  display:block;
+  margin-top:7px;
+}
+
+.location-card {
+  margin-top:7px;
+  padding:10px;
+  border-radius:12px;
+  background:rgba(11,94,215,.1);
+}
+
+.message.mine .location-card {
+  background:rgba(255,255,255,.14);
+}
+
+.chat-compose {
+  border-top:1px solid var(--line);
+  padding-top:12px;
+}
+
+.attachments {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+
+.attachment-preview {
+  position:relative;
+  display:inline-block;
+}
+
+.attachment-preview img {
+  width:65px;
+  height:65px;
+  object-fit:cover;
+  border-radius:10px;
+  border:1px solid var(--line);
+}
+
+.remove-attachment {
+  position:absolute;
+  top:-5px;
+  right:-5px;
+  border:0;
+  border-radius:50%;
+  width:20px;
+  height:20px;
+  background:#e5484d;
+  color:#fff;
+  font-size:11px;
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+.auth-user {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.user-pill {
+  padding:7px 10px;
+  border-radius:999px;
+  background:#edf7ff;
+  color:#0758c9;
+  font-size:12px;
+  font-weight:800;
+}
+
+.dark .user-pill {
+  background:#143d60;
+  color:#cceaff;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(2,25,53,.68);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:3000;
+}
+
+.modal.open {
+  display:flex;
+}
+
+.modalbox {
+  width:min(600px,100%);
+  max-height:90vh;
+  overflow:auto;
+  background:var(--card);
+  color:var(--ink);
+  border-radius:24px;
+  padding:22px;
+  box-shadow:0 30px 90px rgba(0,0,0,.4);
+}
+
+.modalhead {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.modalhead h3 {
+  margin:0;
+}
+
+.close {
+  border:0;
+  background:#eef6ff;
+  color:#183653;
+  border-radius:10px;
+  padding:7px 10px;
+}
+
+.dark .close {
+  background:#183b58;
+  color:#eaf5ff;
+}
+
+/* =========================
+   MAP LOCATION MODAL
+========================= */
+
+#pickLocationMap {
+  height:380px;
+  border-radius:16px;
+  margin:12px 0;
+}
+
+/* =========================
+   DARK MODE / LEAFLET
+========================= */
+
+.dark .leaflet-control-zoom a {
+  background:#102d46;
+  color:#fff;
+  border-color:#31536f;
+}
+
+.dark .leaflet-control-attribution {
+  background:rgba(13,38,61,.85);
+  color:#d7e9f7;
+}
+
+.dark .leaflet-control-attribution a {
+  color:#8ed3ff;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:1000px) {
+  .app {
+    grid-template-columns:82px 1fr;
+  }
+
+  .sidebar {
+    padding:18px 10px;
+  }
+
+  .brand {
+    justify-content:center;
+    padding-bottom:20px;
+  }
+
+  .brand div:last-child,
+  .nav button span,
+  .mini {
+    display:none;
+  }
+
+  .nav button {
+    text-align:center;
+  }
+
+  .stats {
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .two,
+  .chat-layout {
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:680px) {
+  .app {
+    display:block;
+  }
+
+  .sidebar {
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    top:auto;
+    height:68px;
+    z-index:1200;
+    padding:7px;
+    background:#073b73;
+  }
+
+  .brand,
+  .sidebar-bottom {
+    display:none;
+  }
+
+  .nav {
+    display:flex;
+    justify-content:space-around;
+  }
+
+  .nav button {
+    padding:9px;
+    font-size:18px;
+  }
+
+  .nav button span {
+    display:none;
+  }
+
+  .topbar {
+    height:64px;
+    padding:0 15px;
+  }
+
+  .content {
+    padding:15px 15px 88px;
+  }
+
+  .stats,
+  .three,
+  .formgrid {
+    grid-template-columns:1fr;
+  }
+
+  .hero {
+    padding:22px;
+  }
+
+  #mapCanvas {
+    height:470px;
+  }
+
+  #pickLocationMap {
+    height:300px;
+  }
+
+  .map-tools {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .section-head {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .need,
+  .person {
+    flex-direction:column;
+  }
+
+  .field.full {
+    grid-column:auto;
+  }
+
+  .message {
+    max-width:90%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<aside class="sidebar">
+
+  <div class="brand">
+    <div class="brandmark">≋</div>
+    <div>
+      <h1>FloodLink</h1>
+      <span>Resilience • Recovery • Community</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+
+    <button class="active" data-view="dashboard">
+      ⌂ <span data-i18n="dashboard">Dashboard</span>
+    </button>
+
+    <button data-view="map">
+      ◉ <span data-i18n="liveMap">Live Map</span>
+    </button>
+
+    <button data-view="needs">
+      ♡ <span data-i18n="needs">Needs Board</span>
+    </button>
+
+    <button data-view="messages">
+      ✉ <span data-i18n="messages">Messages</span>
+    </button>
+
+    <button data-view="preparedness">
+      ✓ <span data-i18n="preparedness">Preparedness</span>
+    </button>
+
+    <button data-view="profile">
+      ⚙ <span data-i18n="business">Business</span>
+    </button>
+
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="mini">
+      For emergencies, contact Marikina Rescue 161.
+      FloodLink is a community coordination tool,
+      not a replacement for official emergency services.
+    </div>
+  </div>
+
+</aside>
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<main class="main">
+
+<header class="topbar">
+
+  <strong id="pageTitle">
+    Business Dashboard
+  </strong>
+
+  <div class="top-actions">
+
+    <button class="modebtn" id="langBtn">
+      FIL
+    </button>
+
+    <button class="modebtn" id="darkBtn">
+      ☾
+    </button>
+
+    <div id="authArea"></div>
+
+    <div class="avatar" id="avatar">
+      B
+    </div>
+
+  </div>
+
+</header>
+
+<div class="content">
+
+<!-- =========================
+     DASHBOARD
+========================= -->
+
+<section id="dashboard" class="view active">
+
+  <div class="hero">
+
+    <div class="pill">
+      ● MARIKINA FLOODWATCH
+    </div>
+
+    <h2 data-i18n="heroTitle">
+      Protect your business before the water rises.
+    </h2>
+
+    <p data-i18n="heroDescription">
+      Track community flood reports, protect inventory,
+      request help, and coordinate recovery from one
+      calm workspace.
+    </p>
+
+    <div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">
+
+      <button
+        class="btn primary"
+        onclick="showView('map')"
+        data-i18n="openMap">
+        Open live map
+      </button>
+
+      <button
+        class="btn secondary"
+        onclick="openModal('needModal')"
+        data-i18n="postNeed">
+        Post a need
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="grid stats">
+
+    <div class="card stat">
+      <small data-i18n="currentReports">
+        Current reports
+      </small>
+      <strong id="reportCount">0</strong>
+      <span class="sub">
+        community flood pins
+      </span>
+    </div>
+
+    <div class="card stat">
+      <small data-i18n="openRequests">
+        Open requests
+      </small>
+      <strong id="needCount">0</strong>
+      <span class="sub">
+        needs waiting for help
+      </span>
+    </div>
+
+    <div class="card stat">
+      <small data-i18n="preparednessStat">
+        Preparedness
+      </small>
+      <strong id="prepPct">0%</strong>
+      <span class="sub">
+        checklist complete
+      </span>
+    </div>
+
+    <div class="card stat">
+      <small>Map mode</small>
+      <strong>LIVE</strong>
+      <span class="sub">
+        interactive OpenStreetMap
+      </span>
+    </div>
+
+  </div>
+
+  <div class="section-head">
+
+    <div>
+      <h3 data-i18n="situation">
+        Situation overview
+      </h3>
+
+      <div class="sub">
+        Use the map for current community reports;
+        official hazard areas are shown separately.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="grid two">
+
+    <div class="card">
+
+      <div class="alert">
+
+        <i class="dot orange"></i>
+
+        <div>
+
+          <b>Flood information has two layers</b>
+
+          <div class="sub">
+            Orange areas are documented hazard areas.
+            Red pins are user-submitted observations
+            and include a timestamp.
+            Treat user reports as unverified until confirmed.
+          </div>
+
+        </div>
+
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="notice">
+        Marikina's official emergency service is
+        Rescue 161. Save the number before an emergency.
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h3 style="margin-top:0">
+        Business recovery
+      </h3>
+
+      <div style="display:flex;justify-content:space-between">
+
+        <span class="sub">
+          Overall progress
+        </span>
+
+        <b id="recoveryText">
+          0%
+        </b>
+
+      </div>
+
+      <div class="progress" style="margin:10px 0 14px">
+
+        <b
+          id="recoveryBar"
+          style="width:0%">
+        </b>
+
+      </div>
+
+      <div class="tags">
+
+        <span class="tag">Inventory</span>
+        <span class="tag">Documents</span>
+        <span class="tag">Staff</span>
+        <span class="tag">Suppliers</span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- =========================
+     MAP
+========================= -->
+
+<section id="map" class="view">
+
+  <div class="section-head">
+
+    <div>
+
+      <h2 style="margin:0">
+        Marikina Live Map
+      </h2>
+
+      <div class="sub">
+        Report flooding by placing a movable marker,
+        then confirm its exact location.
+      </div>
+
+    </div>
+
+    <button
+      class="btn primary"
+      onclick="startFloodReport()">
+      ＋ Report flooding
+    </button>
+
+  </div>
+
+  <div class="card" style="padding:10px">
+
+    <div
+      id="reportPlacement"
+      class="report-placement">
+
+      <div>
+        <b>Choose the flood location</b>
+        <br>
+        <span style="font-size:12px">
+          Drag the red marker to the exact location.
+          When ready, click Confirm Location.
+        </span>
+      </div>
+
+      <button
+        class="btn primary small"
+        onclick="confirmFloodLocation()">
+        Confirm Location
+      </button>
+
+    </div>
+
+    <div class="map-tools">
+
+      <button
+        class="btn secondary small"
+        onclick="locateBusiness()">
+        ◎ My business
+      </button>
+
+      <button
+        class="btn secondary small"
+        onclick="fitMarikina()">
+        ⌖ Marikina
+      </button>
+
+      <button
+        class="btn ghost small"
+        onclick="clearMyReports()">
+        Clear my demo reports
+      </button>
+
+    </div>
+
+    <div class="legend">
+
+      <span>
+        <i style="background:#e5484d"></i>
+        Community flood report
+      </span>
+
+      <span>
+        <i style="background:#f59e0b"></i>
+        Documented hazard area
+      </span>
+
+      <span>
+        <i style="background:#16a673"></i>
+        Verified/open shelter
+      </span>
+
+      <span>
+        <i style="background:#0b5ed7"></i>
+        Business
+      </span>
+
+    </div>
+
+    <div id="mapCanvas"></div>
+
+  </div>
+
+  <div class="notice" style="margin-top:12px">
+    Map tiles are provided by OpenStreetMap.
+    Flood reports in this prototype are saved on this device.
+  </div>
+
+</section>
+
+<!-- =========================
+     NEEDS
+========================= -->
+
+<section id="needs" class="view">
+
+  <div class="section-head">
+
+    <div>
+
+      <h2 style="margin:0">
+        Community Needs Board
+      </h2>
+
+      <div class="sub">
+        Offer help to another user to start a
+        direct conversation with them.
+      </div>
+
+    </div>
+
+    <button
+      class="btn primary"
+      onclick="openModal('needModal')">
+      ＋ Post a need
+    </button>
+
+  </div>
+
+  <div
+    id="needsList"
+    class="list">
+  </div>
+
+</section>
+
+<!-- =========================
+     MESSAGES
+========================= -->
+
+<section id="messages" class="view">
+
+  <div class="section-head">
+
+    <div>
+
+      <h2 style="margin:0">
+        Direct Messages
+      </h2>
+
+      <div class="sub">
+        Coordinate help, exchange photos,
+        and send map locations.
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="chat-layout">
+
+    <div class="card conversation-list">
+
+      <h3 style="margin-top:0">
+        Conversations
+      </h3>
+
+      <div id="conversationList"></div>
+
+    </div>
+
+    <div class="card chat-window">
+
+      <div class="chat-header">
+
+        <div>
+          <h3
+            id="chatTitle"
+            style="margin:0">
+            Select a conversation
+          </h3>
+
+          <div
+            id="chatSubtitle"
+            class="sub">
+            Your help conversations will appear here.
+          </div>
+        </div>
+
+      </div>
+
+      <div
+        id="messagesContainer"
+        class="messages">
+
+        <div class="empty">
+          Select a conversation to start messaging.
+        </div>
+
+      </div>
+
+      <div class="chat-compose">
+
+        <div id="attachments" class="attachments"></div>
+
+        <div
+          id="locationAttachment"
+          class="notice"
+          style="display:none;margin-bottom:8px">
+        </div>
+
+        <form id="messageForm">
+
+          <div class="formgrid">
+
+            <div class="field full">
+
+              <textarea
+                id="messageText"
+                rows="3"
+                placeholder="Write a message..."
+                data-i18n-placeholder="messagePlaceholder"></textarea>
+
+            </div>
+
+            <div class="field">
+
+              <label>
+                Attach images
+              </label>
+
+              <input
+                id="imageInput"
+                type="file"
+                accept="image/*"
+                multiple>
+
+            </div>
+
+            <div class="field">
+
+              <label>
+                Share location
+              </label>
+
+              <button
+                type="button"
+                class="btn secondary"
+                onclick="openLocationPicker()">
+                📍 Send Map Point
+              </button>
+
+            </div>
+
+            <div class="field full">
+
+              <button
+                class="btn primary"
+                type="submit">
+                Send Message
+              </button>
+
+            </div>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- =========================
+     PREPAREDNESS
+========================= -->
+
+<section id="preparedness" class="view">
+
+  <div class="section-head">
+
+    <div>
+
+      <h2 style="margin:0">
+        Preparedness Checklist
+      </h2>
+
+      <div class="sub">
+        Saved locally so the checklist remains
+        available offline.
+      </div>
+
+    </div>
+
+  </div>
+
+  <div
+    id="checklist"
+    class="grid three">
+  </div>
+
+</section>
+
+<!-- =========================
+     PROFILE
+========================= -->
+
+<section id="profile" class="view">
+
+  <div class="section-head">
+
+    <div>
+
+      <h2 style="margin:0">
+        Business Profile
+      </h2>
+
+      <div class="sub">
+        Your business marker can be moved on the map.
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="grid two">
+
+    <div class="card">
+
+      <form id="profileForm">
+
+        <div class="formgrid">
+
+          <div class="field">
+
+            <label>
+              Business name
+            </label>
+
+            <input
+              id="bizName"
+              required>
+
+          </div>
+
+          <div class="field">
+
+            <label>
+              Owner/contact name
+            </label>
+
+            <input id="ownerName">
+
+          </div>
+
+          <div class="field full">
+
+            <label>
+              Business address
+            </label>
+
+            <input
+              id="bizAddress"
+              placeholder="Street / barangay / Marikina">
+
+          </div>
+
+          <div class="field">
+
+            <label>
+              Latitude
+            </label>
+
+            <input
+              id="bizLat"
+              type="number"
+              step="0.000001">
+
+          </div>
+
+          <div class="field">
+
+            <label>
+              Longitude
+            </label>
+
+            <input
+              id="bizLng"
+              type="number"
+              step="0.000001">
+
+          </div>
+
+          <div class="field full">
+
+            <button class="btn primary">
+              Save business location
+            </button>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+    <div class="card">
+
+      <h3 style="margin-top:0">
+        Emergency card
+      </h3>
+
+      <div class="notice">
+
+        <b>Marikina Rescue 161</b>
+
+        <br>
+
+        Emergency hotline:
+        <b>161</b>
+
+        <br><br>
+
+        Always follow official instructions
+        during an active emergency.
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+</div>
+</main>
+</div>
+
+<!-- =========================
+     LOGIN MODAL
+========================= -->
+
+<div class="modal" id="loginModal">
+
+  <div class="modalbox">
+
+    <div class="modalhead">
+
+      <h3>Log in to FloodLink</h3>
+
+      <button
+        class="close"
+        onclick="closeModal('loginModal')">
+        ✕
+      </button>
+
+    </div>
+
+    <p class="sub">
+      This prototype stores demo accounts on this device.
+    </p>
+
+    <form id="loginForm">
+
+      <div class="formgrid">
+
+        <div class="field full">
+
+          <label>
+            Email
+          </label>
+
+          <input
+            id="loginEmail"
+            type="email"
+            required
+            placeholder="you@example.com">
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            Password
+          </label>
+
+          <input
+            id="loginPassword"
+            type="password"
+            required
+            placeholder="Password">
+
+        </div>
+
+        <div class="field full">
+
+          <button class="btn primary">
+            Log in
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+    <div class="notice" style="margin-top:12px">
+
+      Demo account:
+
+      <b>demo@floodlink.local</b>
+
+      /
+
+      <b>demo123</b>
+
+    </div>
+
+    <button
+      class="btn secondary"
+      style="margin-top:10px;width:100%"
+      onclick="openModal('registerModal')">
+      Create a demo account
+    </button>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     REGISTER MODAL
+========================= -->
+
+<div class="modal" id="registerModal">
+
+  <div class="modalbox">
+
+    <div class="modalhead">
+
+      <h3>Create account</h3>
+
+      <button
+        class="close"
+        onclick="closeModal('registerModal')">
+        ✕
+      </button>
+
+    </div>
+
+    <form id="registerForm">
+
+      <div class="formgrid">
+
+        <div class="field">
+
+          <label>
+            Name
+          </label>
+
+          <input
+            id="registerName"
+            required>
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Email
+          </label>
+
+          <input
+            id="registerEmail"
+            type="email"
+            required>
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            Password
+          </label>
+
+          <input
+            id="registerPassword"
+            type="password"
+            minlength="6"
+            required>
+
+        </div>
+
+        <div class="field full">
+
+          <button class="btn primary">
+            Create account
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     FLOOD REPORT MODAL
+========================= -->
+
+<div class="modal" id="reportModal">
+
+  <div class="modalbox">
+
+    <div class="modalhead">
+
+      <h3>
+        Report flooding
+      </h3>
+
+      <button
+        class="close"
+        onclick="closeModal('reportModal')">
+        ✕
+      </button>
+
+    </div>
+
+    <div class="notice">
+      The red marker on the map is movable.
+      Place it where the flooding is actually happening
+      before confirming.
+    </div>
+
+    <form id="reportForm" style="margin-top:12px">
+
+      <div class="formgrid">
+
+        <div class="field">
+
+          <label>
+            Water level
+          </label>
+
+          <select id="water">
+
+            <option>Unknown</option>
+            <option>Below ankle</option>
+            <option>Ankle–knee</option>
+            <option>Knee–waist</option>
+            <option>Above waist</option>
+
+          </select>
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Status
+          </label>
+
+          <select id="status">
+
+            <option>Still flooding</option>
+            <option>Receding</option>
+            <option>Cleared</option>
+
+          </select>
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            Description
+          </label>
+
+          <textarea
+            id="reportDesc"
+            rows="3"
+            placeholder="Example: water entering the storefront"></textarea>
+
+        </div>
+
+        <div class="field full">
+
+          <button class="btn primary">
+            Save Flood Report
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     NEED MODAL
+========================= -->
+
+<div class="modal" id="needModal">
+
+  <div class="modalbox">
+
+    <div class="modalhead">
+
+      <h3>
+        Post a community need
+      </h3>
+
+      <button
+        class="close"
+        onclick="closeModal('needModal')">
+        ✕
+      </button>
+
+    </div>
+
+    <form id="needForm">
+
+      <div class="formgrid">
+
+        <div class="field">
+
+          <label>
+            Your name
+          </label>
+
+          <input
+            id="needName"
+            required>
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Contact email
+          </label>
+
+          <input
+            id="needEmail"
+            type="email"
+            required>
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Category
+          </label>
+
+          <select id="needCat">
+
+            <option>Water</option>
+            <option>Food</option>
+            <option>Medical supplies</option>
+            <option>Cleanup help</option>
+            <option>Business equipment</option>
+            <option>Temporary storage</option>
+            <option>Shelter</option>
+            <option>Sandbags</option>
+            <option>Transportation</option>
+
+          </select>
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Urgency
+          </label>
+
+          <select id="needUrg">
+
+            <option>Urgent</option>
+            <option>High</option>
+            <option>Normal</option>
+
+          </select>
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            What do you need?
+          </label>
+
+          <textarea
+            id="needText"
+            rows="4"
+            required></textarea>
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            Area / barangay
+          </label>
+
+          <input
+            id="needArea"
+            placeholder="e.g. Malanday"
+            required>
+
+        </div>
+
+        <div class="field full">
+
+          <button class="btn primary">
+            Post request
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     REPORT NEED MODAL
+========================= -->
+
+<div class="modal" id="reportNeedModal">
+
+  <div class="modalbox">
+
+    <div class="modalhead">
+
+      <h3>
+        Report this posting
+      </h3>
+
+      <button
+        class="close"
+        onclick="closeModal('reportNeedModal')">
+        ✕
+      </button>
+
+    </div>
+
+    <p class="sub">
+      Use this when a post appears unserious,
+      misleading, abusive, spam, or otherwise inappropriate.
+    </p>
+
+    <form id="reportNeedForm">
+
+      <input type="hidden" id="reportedNeedId">
+
+      <div class="formgrid">
+
+        <div class="field full">
+
+          <label>
+            Reason
+          </label>
+
+          <select id="reportReason">
+
+            <option>Unclear or unserious request</option>
+            <option>Spam</option>
+            <option>False or misleading information</option>
+            <option>Abusive or inappropriate content</option>
+            <option>Duplicate request</option>
+            <option>Other</option>
+
+          </select>
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            Additional details
+          </label>
+
+          <textarea
+            id="reportDetails"
+            rows="4"></textarea>
+
+        </div>
+
+        <div class="field full">
+
+          <button class="btn danger">
+            Submit Report
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     LOCATION PICKER
+========================= -->
+
+<div class="modal" id="locationModal">
+
+  <div class="modalbox">
+
+    <div class="modalhead">
+
+      <h3>
+        Send a map point
+      </h3>
+
+      <button
+        class="close"
+        onclick="closeModal('locationModal')">
+        ✕
+      </button>
+
+    </div>
+
+    <p class="sub">
+      Click anywhere on the map to choose the location
+      you want to send.
+    </p>
+
+    <div id="pickLocationMap"></div>
+
+    <div
+      id="selectedLocationText"
+      class="notice">
+      No location selected.
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:10px">
+
+      <button
+        class="btn secondary"
+        onclick="useBusinessLocation()">
+        Use My Business Location
+      </button>
+
+      <button
+        class="btn primary"
+        onclick="confirmSendLocation()">
+        Attach Location
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  crossorigin="">
+</script>
+
+<script>
+
+/* ============================================================
+   FLOODLINK APPLICATION
+============================================================ */
+
+const MARIKINA = [14.6373,121.0917];
+
+const hazardBarangays = [
+  "Barangka",
+  "Kalumpang",
+  "Concepcion Uno",
+  "Jesus Dela Peña",
+  "Malanday",
+  "Nangka",
+  "Fortune",
+  "San Roque",
+  "Sta. Elena",
+  "Sto. Niño",
+  "Tañong",
+  "Concepcion Dos",
+  "Marikina Heights",
+  "Industrial Valley"
+];
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+
+function uid(prefix="id") {
+  return prefix + "_" + Date.now() + "_" +
+    Math.random().toString(36).slice(2,8);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    character => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    })[character]
+  );
+}
+
+function loadJSON(key, fallback) {
+  try {
+    return JSON.parse(
+      localStorage.getItem(key) || JSON.stringify(fallback)
+    );
+  } catch {
+    return fallback;
+  }
+}
+
+/* ============================================================
+   STATE
+============================================================ */
+
+const state = {
+
+  profile: loadJSON("fl_profile", {
+    name:"My Business",
+    owner:"",
+    address:"Marikina City",
+    lat:14.6373,
+    lng:121.0917
+  }),
+
+  reports: loadJSON("fl_reports", []),
+
+  needs: loadJSON("fl_needs", []),
+
+  users: loadJSON("fl_users", [
+    {
+      id:"user_demo",
+      name:"Demo User",
+      email:"demo@floodlink.local",
+      password:"demo123"
+    }
+  ]),
+
+  messages: loadJSON("fl_messages", []),
+
+  conversations: loadJSON("fl_conversations", []),
+
+  needReports: loadJSON("fl_need_reports", []),
+
+  checks: loadJSON("fl_checks", {}),
+
+  lang:localStorage.getItem("fl_lang") || "en",
+
+  currentUserId:
+    localStorage.getItem("fl_current_user") || null
+
+};
+
+let map = null;
+let businessMarker = null;
+let reportLayer = null;
+
+let floodPlacementMarker = null;
+let floodPlacementActive = false;
+
+let pickLocationMap = null;
+let pickLocationMarker = null;
+let selectedMessageLocation = null;
+
+let selectedConversationId = null;
+
+let pendingImages = [];
+
+/* ============================================================
+   STORAGE
+============================================================ */
+
+function save() {
+
+  localStorage.setItem(
+    "fl_profile",
+    JSON.stringify(state.profile)
+  );
+
+  localStorage.setItem(
+    "fl_reports",
+    JSON.stringify(state.reports)
+  );
+
+  localStorage.setItem(
+    "fl_needs",
+    JSON.stringify(state.needs)
+  );
+
+  localStorage.setItem(
+    "fl_users",
+    JSON.stringify(state.users)
+  );
+
+  localStorage.setItem(
+    "fl_messages",
+    JSON.stringify(state.messages)
+  );
+
+  localStorage.setItem(
+    "fl_conversations",
+    JSON.stringify(state.conversations)
+  );
+
+  localStorage.setItem(
+    "fl_need_reports",
+    JSON.stringify(state.needReports)
+  );
+
+  localStorage.setItem(
+    "fl_checks",
+    JSON.stringify(state.checks)
+  );
+
+}
+
+/* ============================================================
+   AUTH
+============================================================ */
+
+function currentUser() {
+
+  return state.users.find(
+    user => user.id === state.currentUserId
+  ) || null;
+
+}
+
+function requireLogin() {
+
+  if (!currentUser()) {
+
+    openModal("loginModal");
+
+    return false;
+
+  }
+
+  return true;
+
+}
+
+function renderAuth() {
+
+  const area = document.getElementById("authArea");
+  const user = currentUser();
+
+  if (!user) {
+
+    area.innerHTML = `
+      <button
+        class="modebtn"
+        onclick="openModal('loginModal')">
+        Log in
+      </button>
+    `;
+
+    document.getElementById("avatar").textContent = "B";
+
+    return;
+
+  }
+
+  area.innerHTML = `
+    <div class="auth-user">
+      <span class="user-pill">
+        ${escapeHtml(user.name)}
+      </span>
+
+      <button
+        class="modebtn"
+        onclick="logout()">
+        Log out
+      </button>
+    </div>
+  `;
+
+  document.getElementById("avatar").textContent =
+    user.name.slice(0,1).toUpperCase();
+
+}
+
+function logout() {
+
+  state.currentUserId = null;
+
+  localStorage.removeItem("fl_current_user");
+
+  selectedConversationId = null;
+
+  renderAuth();
+  renderNeeds();
+  renderConversations();
+  renderMessages();
+
+}
+
+document.getElementById("loginForm").onsubmit = event => {
+
+  event.preventDefault();
+
+  const email =
+    document.getElementById("loginEmail").value
+      .trim()
+      .toLowerCase();
+
+  const password =
+    document.getElementById("loginPassword").value;
+
+  const user = state.users.find(
+    item =>
+      item.email.toLowerCase() === email &&
+      item.password === password
+  );
+
+  if (!user) {
+
+    alert("Incorrect email or password.");
+
+    return;
+
+  }
+
+  state.currentUserId = user.id;
+
+  localStorage.setItem(
+    "fl_current_user",
+    user.id
+  );
+
+  closeModal("loginModal");
+
+  renderAuth();
+  renderNeeds();
+  renderConversations();
+  renderMessages();
+
+};
+
+document.getElementById("registerForm").onsubmit = event => {
+
+  event.preventDefault();
+
+  const name =
+    document.getElementById("registerName").value.trim();
+
+  const email =
+    document.getElementById("registerEmail").value
+      .trim()
+      .toLowerCase();
+
+  const password =
+    document.getElementById("registerPassword").value;
+
+  if (state.users.some(
+    user => user.email.toLowerCase() === email
+  )) {
+
+    alert("An account with that email already exists.");
+
+    return;
+
+  }
+
+  const user = {
+
+    id:uid("user"),
+
+    name,
+
+    email,
+
+    password
+
+  };
+
+  state.users.push(user);
+
+  state.currentUserId = user.id;
+
+  save();
+
+  localStorage.setItem(
+    "fl_current_user",
+    user.id
+  );
+
+  closeModal("registerModal");
+
+  renderAuth();
+  renderNeeds();
+
+};
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+
+function showView(id) {
+
+  document
+    .querySelectorAll(".view")
+    .forEach(x => x.classList.remove("active"));
+
+  document
+    .getElementById(id)
+    .classList.add("active");
+
+  document
+    .querySelectorAll(".nav button")
+    .forEach(x =>
+      x.classList.toggle(
+        "active",
+        x.dataset.view === id
+      )
+    );
+
+  const titles = {
+
+    dashboard:"Business Dashboard",
+    map:"Marikina Live Map",
+    needs:"Community Needs",
+    messages:"Direct Messages",
+    preparedness:"Preparedness",
+    profile:"Business Profile"
+
+  };
+
+  document.getElementById("pageTitle").textContent =
+    titles[id] || "FloodLink";
+
+  if (id === "map") {
+
+    setTimeout(() => {
+
+      initMap();
+
+      if (map) {
+        map.invalidateSize();
+      }
+
+    },50);
+
+  }
+
+  if (id === "messages") {
+
+    renderConversations();
+    renderMessages();
+
+  }
+
+}
+
+document
+  .querySelectorAll(".nav button")
+  .forEach(button => {
+
+    button.onclick = () =>
+      showView(button.dataset.view);
+
+  });
+
+/* ============================================================
+   MODALS
+============================================================ */
+
+function openModal(id) {
+
+  document
+    .getElementById(id)
+    .classList.add("open");
+
+}
+
+function closeModal(id) {
+
+  document
+    .getElementById(id)
+    .classList.remove("open");
+
+}
+
+document
+  .querySelectorAll(".modal")
+  .forEach(modal => {
+
+    modal.addEventListener("click", event => {
+
+      if (event.target === modal) {
+
+        modal.classList.remove("open");
+
+      }
+
+    });
+
+  });
+
+/* ============================================================
+   MAP
+============================================================ */
+
+function initMap() {
+
+  if (map) return;
+
+  map = L.map("mapCanvas")
+    .setView(MARIKINA,13.7);
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom:19,
+      attribution:
+        "© OpenStreetMap contributors"
+    }
+  ).addTo(map);
+
+  reportLayer =
+    L.layerGroup().addTo(map);
+
+  const offsets = [
+
+    [.010,-.018],
+    [-.003,-.012],
+    [.006,.006],
+    [.004,.018],
+    [-.005,.026],
+    [-.015,.010],
+    [-.022,-.006],
+    [-.012,-.020],
+    [.002,-.025],
+    [.018,-.006],
+    [.012,.024],
+    [.024,.008],
+    [-.027,.020],
+    [-.020,-.022]
+
+  ];
+
+  hazardBarangays.forEach(
+    (name,i) => {
+
+      L.circle(
+        [
+          MARIKINA[0] + offsets[i][0],
+          MARIKINA[1] + offsets[i][1]
+        ],
+        {
+          radius:850,
+          color:"#f59e0b",
+          weight:2,
+          fillOpacity:.12
+        }
+      )
+      .addTo(map)
+      .bindPopup(`
+        <b>Documented flood-hazard area</b>
+        <br>
+        ${escapeHtml(name)}
+        <br><br>
+        <small>
+          Area-level reference.
+          This is not a real-time water-depth reading.
+        </small>
+      `);
+
+    }
+  );
+
+  businessMarker =
+    L.marker(
+      [
+        state.profile.lat,
+        state.profile.lng
+      ],
+      {
+        draggable:true
+      }
+    )
+    .addTo(map)
+    .bindPopup(`
+      <b>
+        ${escapeHtml(state.profile.name)}
+      </b>
+      <br>
+      Business location
+    `);
+
+  businessMarker.on(
+    "dragend",
+    () => {
+
+      const position =
+        businessMarker.getLatLng();
+
+      state.profile.lat =
+        +position.lat.toFixed(6);
+
+      state.profile.lng =
+        +position.lng.toFixed(6);
+
+      save();
+      renderProfile();
+
+    }
+  );
+
+  renderReports();
+
+}
+
+function markerIcon(color) {
+
+  return L.divIcon({
+
+    className:"",
+
+    html:`
+      <div style="
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        background:${color};
+        border:3px solid white;
+        box-shadow:0 2px 10px #3338;
+      "></div>
+    `,
+
+    iconSize:[18,18],
+
+    iconAnchor:[9,9]
+
+  });
+
+}
+
+function renderReports() {
+
+  if (!map) return;
+
+  reportLayer.clearLayers();
+
+  state.reports.forEach(report => {
+
+    L.marker(
+      [
+        report.lat,
+        report.lng
+      ],
+      {
+        icon:markerIcon("#e5484d")
+      }
+    )
+    .addTo(reportLayer)
+    .bindPopup(`
+      <b>Community flood report</b>
+      <br>
+      ${escapeHtml(report.water)}
+      ·
+      ${escapeHtml(report.status)}
+      <br>
+      ${escapeHtml(
+        report.desc || "No description"
+      )}
+      <br><br>
+      <small>
+        ${new Date(report.time).toLocaleString()}
+      </small>
+    `);
+
+  });
+
+  updateStats();
+
+}
+
+/* ============================================================
+   MOVABLE FLOOD REPORT
+============================================================ */
+
+function startFloodReport() {
+
+  if (!requireLogin()) return;
+
+  showView("map");
+
+  floodPlacementActive = true;
+
+  document
+    .getElementById("reportPlacement")
+    .classList.add("show");
+
+  if (!floodPlacementMarker) {
+
+    floodPlacementMarker =
+      L.marker(
+        map.getCenter(),
+        {
+          draggable:true,
+          icon:markerIcon("#e5484d")
+        }
+      ).addTo(map);
+
+  } else {
+
+    floodPlacementMarker.setLatLng(
+      map.getCenter()
+    );
+
+  }
+
+  floodPlacementMarker.bindTooltip(
+    "Drag me to the flood location",
+    {
+      permanent:true,
+      direction:"top"
+    }
+  ).openTooltip();
+
+  map.panTo(
+    floodPlacementMarker.getLatLng()
+  );
+
+}
+
+function confirmFloodLocation() {
+
+  if (!floodPlacementMarker) {
+
+    alert("Please place the flood marker first.");
+
+    return;
+
+  }
+
+  const point =
+    floodPlacementMarker.getLatLng();
+
+  selectedFloodPoint = {
+    lat:point.lat,
+    lng:point.lng
+  };
+
+  floodPlacementActive = false;
+
+  document
+    .getElementById("reportPlacement")
+    .classList.remove("show");
+
+  floodPlacementMarker.unbindTooltip();
+
+  openModal("reportModal");
+
+}
+
+let selectedFloodPoint = null;
+
+document.getElementById("reportForm").onsubmit =
+  event => {
+
+    event.preventDefault();
+
+    if (!requireLogin()) return;
+
+    if (!selectedFloodPoint) {
+
+      alert(
+        "Please click Report Flooding and place the movable marker first."
+      );
+
+      closeModal("reportModal");
+
+      return;
+
+    }
+
+    state.reports.unshift({
+
+      id:uid("flood"),
+
+      userId:state.currentUserId,
+
+      lat:selectedFloodPoint.lat,
+
+      lng:selectedFloodPoint.lng,
+
+      water:
+        document.getElementById("water").value,
+
+      status:
+        document.getElementById("status").value,
+
+      desc:
+        document.getElementById("reportDesc").value,
+
+      time:new Date().toISOString()
+
+    });
+
+    save();
+
+    selectedFloodPoint = null;
+
+    if (floodPlacementMarker) {
+
+      map.removeLayer(floodPlacementMarker);
+
+      floodPlacementMarker = null;
+
+    }
+
+    closeModal("reportModal");
+
+    event.target.reset();
+
+    renderReports();
+
+  };
+
+/* ============================================================
+   MAP CONTROLS
+============================================================ */
+
+function locateBusiness() {
+
+  showView("map");
+
+  if (!map) initMap();
+
+  map.setView(
+    [
+      state.profile.lat,
+      state.profile.lng
+    ],
+    16
+  );
+
+  businessMarker.openPopup();
+
+}
+
+function fitMarikina() {
+
+  if (!map) initMap();
+
+  map.setView(
+    MARIKINA,
+    13.7
+  );
+
+}
+
+function clearMyReports() {
+
+  if (!requireLogin()) return;
+
+  const confirmed =
+    confirm(
+      "Clear your demo flood reports?"
+    );
+
+  if (!confirmed) return;
+
+  state.reports =
+    state.reports.filter(
+      report =>
+        report.userId !== state.currentUserId
+    );
+
+  save();
+
+  renderReports();
+
+}
+
+/* ============================================================
+   NEEDS BOARD
+============================================================ */
+
+document.getElementById("needForm").onsubmit =
+  event => {
+
+    event.preventDefault();
+
+    if (!requireLogin()) return;
+
+    const user = currentUser();
+
+    state.needs.unshift({
+
+      id:uid("need"),
+
+      userId:user.id,
+
+      name:
+        document.getElementById("needName").value,
+
+      email:
+        document.getElementById("needEmail").value,
+
+      cat:
+        document.getElementById("needCat").value,
+
+      urg:
+        document.getElementById("needUrg").value,
+
+      text:
+        document.getElementById("needText").value,
+
+      area:
+        document.getElementById("needArea").value,
+
+      time:new Date().toISOString(),
+
+      helped:false,
+
+      takenDown:false,
+
+      reports:0
+
+    });
+
+    save();
+
+    closeModal("needModal");
+
+    event.target.reset();
+
+    renderNeeds();
+
+    updateStats();
+
+    showView("needs");
+
+  };
+
+function renderNeeds() {
+
+  const element =
+    document.getElementById("needsList");
+
+  if (!state.needs.length) {
+
+    element.innerHTML = `
+      <div class="empty">
+        No requests yet.
+        <br>
+        Post the first community need.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  const visibleNeeds =
+    state.needs.filter(
+      need => !need.takenDown
+    );
+
+  if (!visibleNeeds.length) {
+
+    element.innerHTML = `
+      <div class="empty">
+        No active community requests.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  element.innerHTML =
+    visibleNeeds.map(
+      need => {
+
+        const own =
+          need.userId === state.currentUserId;
+
+        const reportCount =
+          state.needReports.filter(
+            report => report.needId === need.id
+          ).length;
+
+        return `
+
+        <div class="need">
+
+          <div style="min-width:0">
+
+            <h4>
+              ${escapeHtml(need.text)}
+            </h4>
+
+            <p>
+              ${escapeHtml(need.name)}
+              ·
+              ${escapeHtml(need.area)}
+              ·
+              ${new Date(
+                need.time
+              ).toLocaleString()}
+            </p>
+
+            <div class="tags">
+
+              <span class="tag">
+                ${escapeHtml(need.cat)}
+              </span>
+
+              <span class="tag">
+                ${escapeHtml(need.urg)}
+              </span>
+
+              ${
+                need.helped
+                ? `
+                  <span class="tag">
+                    Help offered
+                  </span>
+                `
+                : ""
+              }
+
+            </div>
+
+            ${
+              reportCount > 0
+              ? `
+                <div class="reported-badge">
+                  ${reportCount}
+                  report${reportCount === 1 ? "" : "s"}
+                </div>
+              `
+              : ""
+            }
+
+          </div>
+
+          <div class="need-actions">
+
+            ${
+              own
+              ? `
+                <button
+                  class="btn danger small"
+                  onclick="takeDownNeed('${need.id}')">
+                  Take Down
+                </button>
+              `
+              : `
+                <button
+                  class="btn primary small"
+                  onclick="offerHelp('${need.id}')">
+                  ${
+                    need.helped
+                    ? "Contact"
+                    : "Offer Help"
+                  }
+                </button>
+
+                <button
+                  class="btn ghost small"
+                  onclick="openReportNeed('${need.id}')">
+                  Report
+                </button>
+              `
+            }
+
+          </div>
+
+        </div>
+
+      `;
+
+      }
+    ).join("");
+
+}
+
+function offerHelp(id) {
+
+  if (!requireLogin()) return;
+
+  const need =
+    state.needs.find(
+      item => item.id === id
+    );
+
+  if (!need) return;
+
+  if (
+    need.userId === state.currentUserId
+  ) {
+
+    alert(
+      "You cannot offer help to your own request."
+    );
+
+    return;
+
+  }
+
+  need.helped = true;
+
+  const conversation =
+    getOrCreateConversation(
+      state.currentUserId,
+      need.userId,
+      need.id
+    );
+
+  save();
+
+  renderNeeds();
+
+  openConversation(
+    conversation.id
+  );
+
+  showView("messages");
+
+}
+
+function takeDownNeed(id) {
+
+  const need =
+    state.needs.find(
+      item => item.id === id
+    );
+
+  if (!need) return;
+
+  if (
+    need.userId !== state.currentUserId
+  ) {
+
+    alert(
+      "Only the person who posted the request can take it down."
+    );
+
+    return;
+
+  }
+
+  if (
+    !confirm(
+      "Take down this request?"
+    )
+  ) return;
+
+  need.takenDown = true;
+
+  save();
+
+  renderNeeds();
+  updateStats();
+
+}
+
+function openReportNeed(id) {
+
+  if (!requireLogin()) return;
+
+  document.getElementById(
+    "reportedNeedId"
+  ).value = id;
+
+  document.getElementById(
+    "reportDetails"
+  ).value = "";
+
+  openModal("reportNeedModal");
+
+}
+
+document.getElementById("reportNeedForm").onsubmit =
+  event => {
+
+    event.preventDefault();
+
+    if (!requireLogin()) return;
+
+    const needId =
+      document.getElementById(
+        "reportedNeedId"
+      ).value;
+
+    state.needReports.push({
+
+      id:uid("needreport"),
+
+      needId,
+
+      reporterId:state.currentUserId,
+
+      reason:
+        document.getElementById(
+          "reportReason"
+        ).value,
+
+      details:
+        document.getElementById(
+          "reportDetails"
+        ).value,
+
+      time:new Date().toISOString()
+
+    });
+
+    save();
+
+    closeModal("reportNeedModal");
+
+    renderNeeds();
+
+    alert(
+      "Thank you. The posting has been reported."
+    );
+
+  };
+
+/* ============================================================
+   CONVERSATIONS
+============================================================ */
+
+function getOrCreateConversation(
+  userA,
+  userB,
+  needId=null
+) {
+
+  let conversation =
+    state.conversations.find(
+      conversation =>
+        (
+          conversation.userA === userA &&
+          conversation.userB === userB
+        ) ||
+        (
+          conversation.userA === userB &&
+          conversation.userB === userA
+        )
+    );
+
+  if (!conversation) {
+
+    conversation = {
+
+      id:uid("conversation"),
+
+      userA,
+
+      userB,
+
+      needId,
+
+      createdAt:
+        new Date().toISOString()
+
+    };
+
+    state.conversations.push(
+      conversation
+    );
+
+  }
+
+  return conversation;
+
+}
+
+function conversationOtherUser(conversation) {
+
+  const id =
+    conversation.userA === state.currentUserId
+      ? conversation.userB
+      : conversation.userA;
+
+  return state.users.find(
+    user => user.id === id
+  );
+
+}
+
+function renderConversations() {
+
+  const element =
+    document.getElementById(
+      "conversationList"
+    );
+
+  if (!currentUser()) {
+
+    element.innerHTML = `
+      <div class="empty">
+        Log in to view your conversations.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  const mine =
+    state.conversations.filter(
+      conversation =>
+        conversation.userA === state.currentUserId ||
+        conversation.userB === state.currentUserId
+    );
+
+  if (!mine.length) {
+
+    element.innerHTML = `
+      <div class="empty">
+        No conversations yet.
+        <br><br>
+        Offer help on a community request to start one.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  element.innerHTML =
+    mine.map(
+      conversation => {
+
+        const other =
+          conversationOtherUser(
+            conversation
+          );
+
+        const lastMessage =
+          state.messages
+            .filter(
+              message =>
+                message.conversationId ===
+                conversation.id
+            )
+            .sort(
+              (a,b) =>
+                new Date(b.time) -
+                new Date(a.time)
+            )[0];
+
+        return `
+
+          <div
+            class="conversation ${
+              selectedConversationId ===
+              conversation.id
+                ? "active"
+                : ""
+            }"
+            onclick="openConversation('${conversation.id}')">
+
+            <b>
+              ${escapeHtml(
+                other
+                  ? other.name
+                  : "Unknown user"
+              )}
+            </b>
+
+            <div class="sub">
+
+              ${
+                lastMessage
+                ? escapeHtml(
+                    lastMessage.text ||
+                    (
+                      lastMessage.image
+                      ? "📷 Image"
+                      : "📍 Location"
+                    )
+                  )
+                : "Conversation started"
+              }
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+function openConversation(id) {
+
+  selectedConversationId = id;
+
+  renderConversations();
+  renderMessages();
+
+}
+
+function renderMessages() {
+
+  const container =
+    document.getElementById(
+      "messagesContainer"
+    );
+
+  const title =
+    document.getElementById(
+      "chatTitle"
+    );
+
+  const subtitle =
+    document.getElementById(
+      "chatSubtitle"
+    );
+
+  if (!currentUser()) {
+
+    title.textContent =
+      "Log in to use Direct Messages";
+
+    subtitle.textContent =
+      "Your conversations will appear here.";
+
+    container.innerHTML = `
+      <div class="empty">
+        Please log in first.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  if (!selectedConversationId) {
+
+    title.textContent =
+      "Select a conversation";
+
+    subtitle.textContent =
+      "Your help conversations will appear here.";
+
+    container.innerHTML = `
+      <div class="empty">
+        Select a conversation to start messaging.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  const conversation =
+    state.conversations.find(
+      item =>
+        item.id === selectedConversationId
+    );
+
+  if (!conversation) return;
+
+  const other =
+    conversationOtherUser(
+      conversation
+    );
+
+  title.textContent =
+    other
+      ? other.name
+      : "Conversation";
+
+  subtitle.textContent =
+    other
+      ? other.email
+      : "";
+
+  const messages =
+    state.messages
+      .filter(
+        message =>
+          message.conversationId ===
+          conversation.id
+      )
+      .sort(
+        (a,b) =>
+          new Date(a.time) -
+          new Date(b.time)
+      );
+
+  if (!messages.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        No messages yet.
+        Send a message to coordinate help.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML =
+    messages.map(
+      message => {
+
+        const mine =
+          message.senderId ===
+          state.currentUserId;
+
+        return `
+
+          <div class="message ${
+            mine ? "mine" : ""
+          }">
+
+            ${
+              message.text
+              ? `
+                <div>
+                  ${escapeHtml(
+                    message.text
+                  )}
+                </div>
+              `
+              : ""
+            }
+
+            ${
+              message.image
+              ? `
+                <img
+                  src="${message.image}"
+                  alt="Shared image">
+              `
+              : ""
+            }
+
+            ${
+              message.location
+              ? `
+                <div class="location-card">
+
+                  📍
+                  <b>
+                    Shared Map Point
+                  </b>
+
+                  <br>
+
+                  <small>
+                    ${message.location.lat.toFixed(6)},
+                    ${message.location.lng.toFixed(6)}
+                  </small>
+
+                  <br><br>
+
+                  <button
+                    class="btn secondary small"
+                    onclick="openSharedLocation(
+                      ${message.location.lat},
+                      ${message.location.lng}
+                    )">
+                    Open on Map
+                  </button>
+
+                </div>
+              `
+              : ""
+            }
+
+            <span class="message-time">
+              ${
+                new Date(
+                  message.time
+                ).toLocaleString()
+              }
+            </span>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+  setTimeout(() => {
+
+    container.scrollTop =
+      container.scrollHeight;
+
+  },20);
+
+}
+
+/* ============================================================
+   IMAGE MESSAGING
+============================================================ */
+
+document.getElementById("imageInput").onchange =
+  event => {
+
+    const files =
+      Array.from(event.target.files || []);
+
+    pendingImages = [];
+
+    files.slice(0,4).forEach(file => {
+
+      if (!file.type.startsWith("image/")) {
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+
+        alert(
+          file.name +
+          " is larger than 2 MB and was skipped."
+        );
+
+        return;
+
+      }
+
+      const reader =
+        new FileReader();
+
+      reader.onload = () => {
+
+        pendingImages.push(
+          reader.result
+        );
+
+        renderAttachmentPreview();
+
+      };
+
+      reader.readAsDataURL(file);
+
+    });
+
+  };
+
+function renderAttachmentPreview() {
+
+  const element =
+    document.getElementById(
+      "attachments"
+    );
+
+  element.innerHTML =
+    pendingImages.map(
+      (image,index) => `
+
+        <div class="attachment-preview">
+
+          <img
+            src="${image}"
+            alt="Attachment">
+
+          <button
+            class="remove-attachment"
+            type="button"
+            onclick="removeAttachment(${index})">
+            ×
+          </button>
+
+        </div>
+
+      `
+    ).join("");
+
+}
+
+function removeAttachment(index) {
+
+  pendingImages.splice(
+    index,
+    1
+  );
+
+  renderAttachmentPreview();
+
+}
+
+/* ============================================================
+   LOCATION MESSAGING
+============================================================ */
+
+function openLocationPicker() {
+
+  if (!requireLogin()) return;
+
+  if (!selectedConversationId) {
+
+    alert(
+      "Open a conversation first."
+    );
+
+    return;
+
+  }
+
+  openModal("locationModal");
+
+  setTimeout(() => {
+
+    if (!pickLocationMap) {
+
+      pickLocationMap =
+        L.map("pickLocationMap")
+          .setView(
+            [
+              state.profile.lat,
+              state.profile.lng
+            ],
+            15
+          );
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom:19,
+          attribution:
+            "© OpenStreetMap contributors"
+        }
+      ).addTo(pickLocationMap);
+
+      pickLocationMap.on(
+        "click",
+        event => {
+
+          selectLocation(
+            event.latlng.lat,
+            event.latlng.lng
+          );
+
+        }
+      );
+
+    }
+
+    pickLocationMap.invalidateSize();
+
+    pickLocationMap.setView(
+      [
+        state.profile.lat,
+        state.profile.lng
+      ],
+      15
+    );
+
+  },100);
+
+}
+
+function selectLocation(lat,lng) {
+
+  selectedMessageLocation = {
+    lat,
+    lng
+  };
+
+  if (pickLocationMarker) {
+
+    pickLocationMarker.setLatLng(
+      [lat,lng]
+    );
+
+  } else {
+
+    pickLocationMarker =
+      L.marker(
+        [lat,lng],
+        {
+          draggable:true
+        }
+      ).addTo(
+        pickLocationMap
+      );
+
+    pickLocationMarker.on(
+      "dragend",
+      () => {
+
+        const point =
+          pickLocationMarker.getLatLng();
+
+        selectedMessageLocation = {
+
+          lat:point.lat,
+          lng:point.lng
+
+        };
+
+        updateLocationText();
+
+      }
+    );
+
+  }
+
+  updateLocationText();
+
+}
+
+function updateLocationText() {
+
+  const element =
+    document.getElementById(
+      "selectedLocationText"
+    );
+
+  if (!selectedMessageLocation) {
+
+    element.textContent =
+      "No location selected.";
+
+    return;
+
+  }
+
+  element.innerHTML = `
+
+    📍 Selected:
+
+    <b>
+      ${selectedMessageLocation.lat.toFixed(6)},
+      ${selectedMessageLocation.lng.toFixed(6)}
+    </b>
+
+  `;
+
+}
+
+function useBusinessLocation() {
+
+  selectLocation(
+    state.profile.lat,
+    state.profile.lng
+  );
+
+  if (pickLocationMap) {
+
+    pickLocationMap.setView(
+      [
+        state.profile.lat,
+        state.profile.lng
+      ],
+      16
+    );
+
+  }
+
+}
+
+function confirmSendLocation() {
+
+  if (!selectedMessageLocation) {
+
+    alert(
+      "Choose a location first."
+    );
+
+    return;
+
+  }
+
+  const element =
+    document.getElementById(
+      "locationAttachment"
+    );
+
+  element.style.display = "block";
+
+  element.innerHTML = `
+
+    📍 Location attached:
+
+    <b>
+      ${selectedMessageLocation.lat.toFixed(6)},
+      ${selectedMessageLocation.lng.toFixed(6)}
+    </b>
+
+    <button
+      type="button"
+      class="btn ghost small"
+      style="margin-left:8px"
+      onclick="removeLocationAttachment()">
+      Remove
+    </button>
+
+  `;
+
+  closeModal("locationModal");
+
+}
+
+function removeLocationAttachment() {
+
+  selectedMessageLocation = null;
+
+  document.getElementById(
+    "locationAttachment"
+  ).style.display = "none";
+
+}
+
+function openSharedLocation(lat,lng) {
+
+  showView("map");
+
+  setTimeout(() => {
+
+    if (!map) initMap();
+
+    map.setView(
+      [lat,lng],
+      17
+    );
+
+    L.marker(
+      [lat,lng],
+      {
+        icon:markerIcon("#7557d8")
+      }
+    )
+    .addTo(map)
+    .bindPopup(`
+      <b>Shared location</b>
+      <br>
+      ${lat.toFixed(6)},
+      ${lng.toFixed(6)}
+    `)
+    .openPopup();
+
+  },100);
+
+}
+
+/* ============================================================
+   SEND MESSAGE
+============================================================ */
+
+document.getElementById("messageForm").onsubmit =
+  event => {
+
+    event.preventDefault();
+
+    if (!requireLogin()) return;
+
+    if (!selectedConversationId) {
+
+      alert(
+        "Select a conversation first."
+      );
+
+      return;
+
+    }
+
+    const text =
+      document.getElementById(
+        "messageText"
+      ).value.trim();
+
+    if (
+      !text &&
+      !pendingImages.length &&
+      !selectedMessageLocation
+    ) {
+
+      alert(
+        "Write a message, attach an image, or share a location."
+      );
+
+      return;
+
+    }
+
+    if (pendingImages.length) {
+
+      pendingImages.forEach(
+        image => {
+
+          state.messages.push({
+
+            id:uid("message"),
+
+            conversationId:
+              selectedConversationId,
+
+            senderId:
+              state.currentUserId,
+
+            text:
+              text || "",
+
+            image,
+
+            location:
+              selectedMessageLocation
+                ? {
+                    ...selectedMessageLocation
+                  }
+                : null,
+
+            time:
+              new Date().toISOString()
+
+          });
+
+        }
+      );
+
+    } else {
+
+      state.messages.push({
+
+        id:uid("message"),
+
+        conversationId:
+          selectedConversationId,
+
+        senderId:
+          state.currentUserId,
+
+        text,
+
+        image:null,
+
+        location:
+          selectedMessageLocation
+            ? {
+                ...selectedMessageLocation
+              }
+            : null,
+
+        time:
+          new Date().toISOString()
+
+      });
+
+    }
+
+    save();
+
+    document.getElementById(
+      "messageText"
+    ).value = "";
+
+    document.getElementById(
+      "imageInput"
+    ).value = "";
+
+    pendingImages = [];
+
+    selectedMessageLocation = null;
+
+    document.getElementById(
+      "locationAttachment"
+    ).style.display = "none";
+
+    renderAttachmentPreview();
+
+    renderMessages();
+
+    renderConversations();
+
+  };
+
+/* ============================================================
+   PROFILE
+============================================================ */
+
+function renderProfile() {
+
+  document.getElementById(
+    "bizName"
+  ).value =
+    state.profile.name;
+
+  document.getElementById(
+    "ownerName"
+  ).value =
+    state.profile.owner || "";
+
+  document.getElementById(
+    "bizAddress"
+  ).value =
+    state.profile.address || "";
+
+  document.getElementById(
+    "bizLat"
+  ).value =
+    state.profile.lat;
+
+  document.getElementById(
+    "bizLng"
+  ).value =
+    state.profile.lng;
+
+  document.getElementById(
+    "avatar"
+  ).textContent =
+    (
+      state.profile.name ||
+      "B"
+    ).slice(0,1).toUpperCase();
+
+}
+
+document.getElementById("profileForm").onsubmit =
+  event => {
+
+    event.preventDefault();
+
+    state.profile = {
+
+      name:
+        document.getElementById(
+          "bizName"
+        ).value,
+
+      owner:
+        document.getElementById(
+          "ownerName"
+        ).value,
+
+      address:
+        document.getElementById(
+          "bizAddress"
+        ).value,
+
+      lat:
+        +document.getElementById(
+          "bizLat"
+        ).value ||
+        MARIKINA[0],
+
+      lng:
+        +document.getElementById(
+          "bizLng"
+        ).value ||
+        MARIKINA[1]
+
+    };
+
+    save();
+
+    renderProfile();
+
+    if (businessMarker) {
+
+      businessMarker
+        .setLatLng([
+          state.profile.lat,
+          state.profile.lng
+        ])
+        .bindPopup(`
+          <b>
+            ${escapeHtml(
+              state.profile.name
+            )}
+          </b>
+          <br>
+          Business location
+        `);
+
+      map.setView(
+        [
+          state.profile.lat,
+          state.profile.lng
+        ],
+        16
+      );
+
+    }
+
+  };
+
+/* ============================================================
+   PREPAREDNESS
+============================================================ */
+
+const checklistItems = [
+
+  "Emergency contacts saved",
+  "Inventory elevated/protected",
+  "Important documents backed up",
+  "Generator/power plan ready",
+  "Insurance details accessible",
+  "Employee communication plan",
+  "Supplier recovery contacts",
+  "Emergency kit checked",
+  "Evacuation route reviewed"
+
+];
+
+function renderChecklist() {
+
+  const element =
+    document.getElementById(
+      "checklist"
+    );
+
+  element.innerHTML =
+    checklistItems
+      .map(
+        (item,index) => `
+
+          <label
+            class="card"
+            style="
+              display:flex;
+              gap:12px;
+              align-items:flex-start;
+              cursor:pointer;
+            ">
+
+            <input
+              type="checkbox"
+              ${
+                state.checks[index]
+                ? "checked"
+                : ""
+              }
+              onchange="
+                toggleCheck(
+                  ${index},
+                  this.checked
+                )
+              "
+              style="
+                margin-top:4px;
+                width:18px;
+                height:18px;
+              ">
+
+            <div>
+
+              <b>
+                ${item}
+              </b>
+
+              <div
+                class="sub"
+                style="margin-top:5px">
+
+                ${
+                  state.checks[index]
+                  ? "Complete"
+                  : "Not completed"
+                }
+
+              </div>
+
+            </div>
+
+          </label>
+
+        `
+      )
+      .join("");
+
+}
+
+function toggleCheck(index,value) {
+
+  state.checks[index] =
+    value;
+
+  save();
+
+  updateStats();
+
+  renderChecklist();
+
+}
+
+/* ============================================================
+   STATISTICS
+============================================================ */
+
+function updateStats() {
+
+  document.getElementById(
+    "reportCount"
+  ).textContent =
+    state.reports.length;
+
+  document.getElementById(
+    "needCount"
+  ).textContent =
+    state.needs.filter(
+      need =>
+        !need.helped &&
+        !need.takenDown
+    ).length;
+
+  const completed =
+    Object.values(
+      state.checks
+    ).filter(Boolean).length;
+
+  const percentage =
+    Math.round(
+      completed /
+      checklistItems.length *
+      100
+    );
+
+  document.getElementById(
+    "prepPct"
+  ).textContent =
+    percentage + "%";
+
+  document.getElementById(
+    "recoveryText"
+  ).textContent =
+    percentage + "%";
+
+  document.getElementById(
+    "recoveryBar"
+  ).style.width =
+    percentage + "%";
+
+}
+
+/* ============================================================
+   DARK MODE
+============================================================ */
+
+document.getElementById("darkBtn").onclick =
+  () => {
+
+    document.body.classList.toggle(
+      "dark"
+    );
+
+    localStorage.setItem(
+      "fl_dark",
+      document.body.classList.contains(
+        "dark"
+      )
+    );
+
+    document.getElementById(
+      "darkBtn"
+    ).textContent =
+      document.body.classList.contains(
+        "dark"
+      )
+        ? "☀"
+        : "☾";
+
+  };
+
+if (
+  localStorage.getItem(
+    "fl_dark"
+  ) === "true"
+) {
+
+  document.body.classList.add(
+    "dark"
+  );
+
+  document.getElementById(
+    "darkBtn"
+  ).textContent = "☀";
+
+}
+
+/* ============================================================
+   TRANSLATOR
+============================================================ */
+
+const translations = {
+
+  en: {
+
+    dashboard:"Dashboard",
+    liveMap:"Live Map",
+    needs:"Needs Board",
+    messages:"Messages",
+    preparedness:"Preparedness",
+    business:"Business",
+
+    heroTitle:
+      "Protect your business before the water rises.",
+
+    heroDescription:
+      "Track community flood reports, protect inventory, request help, and coordinate recovery from one calm workspace.",
+
+    openMap:
+      "Open live map",
+
+    postNeed:
+      "Post a need",
+
+    currentReports:
+      "Current reports",
+
+    openRequests:
+      "Open requests",
+
+    preparednessStat:
+      "Preparedness",
+
+    situation:
+      "Situation overview",
+
+    messagePlaceholder:
+      "Write a message..."
+
+  },
+
+  fil: {
+
+    dashboard:"Dashboard",
+    liveMap:"Live Map",
+    needs:"Mga Pangangailangan",
+    messages:"Mga Mensahe",
+    preparedness:"Paghahanda",
+    business:"Negosyo",
+
+    heroTitle:
+      "Protektahan ang iyong negosyo bago tumaas ang tubig.",
+
+    heroDescription:
+      "Subaybayan ang mga ulat ng baha, protektahan ang imbentaryo, humingi ng tulong, at makipag-ugnayan sa komunidad sa iisang workspace.",
+
+    openMap:
+      "Buksan ang live map",
+
+    postNeed:
+      "Mag-post ng pangangailangan",
+
+    currentReports:
+      "Kasalukuyang ulat",
+
+    openRequests:
+      "Bukas na kahilingan",
+
+    preparednessStat:
+      "Paghahanda",
+
+    situation:
+      "Kalagayan",
+
+    messagePlaceholder:
+      "Sumulat ng mensahe..."
+
+  }
+
+};
+
+function translateUI() {
+
+  const language =
+    translations[state.lang];
+
+  document
+    .querySelectorAll("[data-i18n]")
+    .forEach(element => {
+
+      const key =
+        element.dataset.i18n;
+
+      if (language[key]) {
+
+        element.textContent =
+          language[key];
+
+      }
+
+    });
+
+  document
+    .querySelectorAll(
+      "[data-i18n-placeholder]"
+    )
+    .forEach(element => {
+
+      const key =
+        element.dataset.i18nPlaceholder;
+
+      if (language[key]) {
+
+        element.placeholder =
+          language[key];
+
+      }
+
+    });
+
+  document.getElementById(
+    "langBtn"
+  ).textContent =
+    state.lang === "en"
+      ? "FIL"
+      : "EN";
+
+  document.documentElement.lang =
+    state.lang === "en"
+      ? "en"
+      : "fil";
+
+}
+
+document.getElementById("langBtn").onclick =
+  () => {
+
+    state.lang =
+      state.lang === "en"
+        ? "fil"
+        : "en";
+
+    localStorage.setItem(
+      "fl_lang",
+      state.lang
+    );
+
+    translateUI();
+
+  };
+
+/* ============================================================
+   INITIALIZE
+============================================================ */
+
+renderAuth();
+renderNeeds();
+renderConversations();
+renderMessages();
+renderChecklist();
+renderProfile();
+updateStats();
+translateUI();
+
+</script>
+
+</body>
+</html>
